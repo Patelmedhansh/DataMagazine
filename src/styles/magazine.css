@@ -1,0 +1,484 @@
+/* Magazine Cover Styles */
+.magazine-cover {
+  width: 100%;
+  max-width: 850px;
+  aspect-ratio: 8.5 / 11;
+  margin: 0 auto;
+  padding: 48px;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.1);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Header */
+.magazine-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-bottom: 24px;
+  border-bottom: 2px solid #000;
+}
+
+.magazine-logo {
+  font-family: 'Playfair Display', serif;
+  font-size: 32px;
+  font-weight: 700;
+  letter-spacing: 2px;
+}
+
+.magazine-issue {
+  font-family: 'Inter', sans-serif;
+  font-size: 14px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  opacity: 0.6;
+}
+
+/* Main Content */
+.magazine-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 24px;
+  text-align: left;
+}
+
+.magazine-title {
+  font-family: 'Playfair Display', serif;
+  font-size: 56px;
+  font-weight: 900;
+  line-height: 1.1;
+  letter-spacing: -1px;
+  margin: 0;
+  text-transform: uppercase;
+}
+
+.magazine-tagline {
+  font-family: 'Inter', sans-serif;
+  font-size: 20px;
+  line-height: 1.6;
+  margin: 0;
+  opacity: 0.8;
+  max-width: 600px;
+}
+
+/* Metrics */
+.magazine-metric {
+  display: flex;
+  align-items: baseline;
+  gap: 16px;
+  margin-top: 24px;
+}
+
+.metric-value {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 72px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.metric-growth {
+  font-family: 'Inter', sans-serif;
+  font-size: 24px;
+  font-weight: 600;
+  padding: 8px 16px;
+  border-radius: 8px;
+  background: rgba(34, 197, 94, 0.1);
+  color: rgb(34, 197, 94);
+}
+
+/* Footer */
+.magazine-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-top: 24px;
+  border-top: 1px solid rgba(0, 0, 0, 0.2);
+}
+
+.magazine-date,
+.magazine-category {
+  font-family: 'Inter', sans-serif;
+  font-size: 14px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  opacity: 0.6;
+}
+
+/* Themes */
+.magazine-cover--business {
+  background: linear-gradient(135deg, #fafafa 0%, #ffffff 100%);
+  color: #1a1a1a;
+}
+
+.magazine-cover--business .magazine-logo {
+  color: #d4af37;
+}
+
+.magazine-cover--business .magazine-title {
+  color: #1a1a1a;
+}
+
+.magazine-cover--tech {
+  background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+  color: #ffffff;
+}
+
+.magazine-cover--tech .magazine-logo {
+  color: #00ff88;
+}
+
+.magazine-cover--tech .magazine-title {
+  color: #0066cc;
+  text-shadow: 0 0 20px rgba(0, 102, 204, 0.3);
+}
+
+.magazine-cover--tech .magazine-header,
+.magazine-cover--tech .magazine-footer {
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.magazine-cover--playful {
+  background: linear-gradient(135deg, #fff5f7 0%, #fffaf0 100%);
+  color: #1a1a1a;
+}
+
+.magazine-cover--playful .magazine-logo {
+  color: #ff006e;
+}
+
+.magazine-cover--playful .magazine-title {
+  color: #ff006e;
+}
+
+.magazine-cover--playful .metric-growth {
+  background: rgba(255, 0, 110, 0.1);
+  color: #ff006e;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .magazine-cover {
+    padding: 24px;
+  }
+
+  .magazine-title {
+    font-size: 36px;
+  }
+
+  .magazine-tagline {
+    font-size: 16px;
+  }
+
+  .metric-value {
+    font-size: 48px;
+  }
+
+  .metric-growth {
+    font-size: 18px;
+  }
+}
+/* Feature Article Styles */
+.magazine-article {
+  width: 100%;
+  max-width: 850px;
+  margin: 0 auto;
+  padding: 48px;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.1);
+}
+
+/* Article Header */
+.article-header {
+  margin-bottom: 32px;
+  padding-bottom: 24px;
+  border-bottom: 2px solid #000;
+}
+
+.article-title {
+  font-family: 'Playfair Display', serif;
+  font-size: 42px;
+  font-weight: 900;
+  line-height: 1.2;
+  letter-spacing: -0.5px;
+  margin: 0 0 16px 0;
+  color: #1a1a1a;
+}
+
+.article-subtitle {
+  font-family: 'Inter', sans-serif;
+  font-size: 20px;
+  line-height: 1.6;
+  margin: 0 0 24px 0;
+  opacity: 0.7;
+  font-weight: 500;
+}
+
+.article-meta {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-family: 'Inter', sans-serif;
+  font-size: 14px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  opacity: 0.6;
+}
+
+.article-author {
+  font-weight: 600;
+}
+
+.article-separator {
+  opacity: 0.5;
+}
+
+.article-date {
+  font-weight: 400;
+}
+
+/* Article Body - 2 Column Layout */
+.article-body {
+  columns: 2;
+  column-gap: 40px;
+  font-family: 'Inter', sans-serif;
+  font-size: 16px;
+  line-height: 1.8;
+  color: #333;
+  text-align: justify;
+  hyphens: auto;
+}
+
+/* Drop Cap - First Letter */
+.article-dropcap::first-letter {
+  font-family: 'Playfair Display', serif;
+  font-size: 72px;
+  font-weight: 700;
+  line-height: 0.8;
+  float: left;
+  margin: 8px 12px 0 0;
+  color: #1a1a1a;
+}
+
+.article-body p {
+  margin: 0 0 16px 0;
+}
+
+/* Article Footer */
+.article-footer {
+  margin-top: 32px;
+  padding-top: 24px;
+}
+
+.article-line {
+  width: 80px;
+  height: 3px;
+  background: #1a1a1a;
+}
+
+/* Theme Variations */
+.magazine-article--business {
+  background: linear-gradient(135deg, #fafafa 0%, #ffffff 100%);
+}
+
+.magazine-article--business .article-header {
+  border-color: #d4af37;
+}
+
+.magazine-article--business .article-dropcap::first-letter {
+  color: #d4af37;
+}
+
+.magazine-article--business .article-line {
+  background: #d4af37;
+}
+
+.magazine-article--tech {
+  background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+  color: #ffffff;
+}
+
+.magazine-article--tech .article-title {
+  color: #0066cc;
+  text-shadow: 0 0 20px rgba(0, 102, 204, 0.2);
+}
+
+.magazine-article--tech .article-body {
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.magazine-article--tech .article-header {
+  border-color: rgba(0, 255, 136, 0.3);
+}
+
+.magazine-article--tech .article-dropcap::first-letter {
+  color: #00ff88;
+}
+
+.magazine-article--tech .article-line {
+  background: #00ff88;
+}
+
+.magazine-article--playful {
+  background: linear-gradient(135deg, #fff5f7 0%, #fffaf0 100%);
+}
+
+.magazine-article--playful .article-title {
+  color: #ff006e;
+}
+
+.magazine-article--playful .article-header {
+  border-color: rgba(255, 0, 110, 0.3);
+}
+
+.magazine-article--playful .article-dropcap::first-letter {
+  color: #ff006e;
+}
+
+.magazine-article--playful .article-line {
+  background: #ff006e;
+}
+
+/* Responsive - Single Column on Mobile */
+@media (max-width: 768px) {
+  .magazine-article {
+    padding: 24px;
+  }
+
+  .article-title {
+    font-size: 32px;
+  }
+
+  .article-subtitle {
+    font-size: 16px;
+  }
+
+  .article-body {
+    columns: 1;
+    column-gap: 0;
+  }
+
+  .article-dropcap::first-letter {
+    font-size: 56px;
+  }
+}
+/* Magazine Chart Styles */
+.magazine-chart {
+  width: 100%;
+  max-width: 850px;
+  margin: 0 auto;
+  padding: 48px;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.1);
+}
+
+/* Chart Header */
+.chart-header {
+  margin-bottom: 32px;
+  padding-bottom: 16px;
+  border-bottom: 2px solid #000;
+}
+
+.chart-title {
+  font-family: 'Playfair Display', serif;
+  font-size: 32px;
+  font-weight: 700;
+  line-height: 1.2;
+  margin: 0 0 8px 0;
+  color: #1a1a1a;
+}
+
+.chart-subtitle {
+  font-family: 'Inter', sans-serif;
+  font-size: 16px;
+  line-height: 1.5;
+  margin: 0;
+  opacity: 0.7;
+}
+
+/* Chart Body */
+.chart-body {
+  margin: 24px 0;
+}
+
+/* Chart Footer */
+.chart-footer {
+  margin-top: 24px;
+  padding-top: 16px;
+  border-top: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.chart-caption {
+  font-family: 'Inter', sans-serif;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  opacity: 0.5;
+}
+
+/* Theme Variations */
+.magazine-chart--business {
+  background: linear-gradient(135deg, #fafafa 0%, #ffffff 100%);
+}
+
+.magazine-chart--business .chart-header {
+  border-color: #d4af37;
+}
+
+.magazine-chart--tech {
+  background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+  color: #ffffff;
+}
+
+.magazine-chart--tech .chart-title {
+  color: #0066cc;
+}
+
+.magazine-chart--tech .chart-subtitle,
+.magazine-chart--tech .chart-caption {
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.magazine-chart--tech .chart-header {
+  border-color: rgba(0, 255, 136, 0.3);
+}
+
+.magazine-chart--tech .chart-footer {
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+.magazine-chart--playful {
+  background: linear-gradient(135deg, #fff5f7 0%, #fffaf0 100%);
+}
+
+.magazine-chart--playful .chart-title {
+  color: #ff006e;
+}
+
+.magazine-chart--playful .chart-header {
+  border-color: rgba(255, 0, 110, 0.3);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .magazine-chart {
+    padding: 24px;
+  }
+
+  .chart-title {
+    font-size: 24px;
+  }
+
+  .chart-subtitle {
+    font-size: 14px;
+  }
+}
+
