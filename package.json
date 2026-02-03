@@ -4,12 +4,12 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "postinstall": "npm install @valibot/to-json-schema --legacy-peer-deps || true",
-    "build": "next build",
+    "build": "prisma generate && next build",
     "start": "next start",
     "lint": "eslint .",
     "lint:fix": "eslint --fix .",
-    "init": "npx tambo init"
+    "init": "npx tambo init",
+    "postinstall": "prisma generate"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"
@@ -31,7 +31,6 @@
     "@tiptap/extension-text": "^3.17.1",
     "@tiptap/react": "^3.17.1",
     "@tiptap/suggestion": "^3.17.1",
-    
     "class-variance-authority": "^0.7.1",
     "dompurify": "^3.3.0",
     "dotenv": "^17.2.3",
@@ -64,5 +63,5 @@
     "tailwindcss": "^4",
     "tsx": "^4.21.0",
     "typescript": "^5"
-  } 
+  }
 }
