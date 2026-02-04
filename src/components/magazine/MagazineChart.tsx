@@ -21,9 +21,9 @@ interface ChartData {
 }
 
 interface MagazineChartProps {
-  title: string;
+  title?: string; // ✅ Made optional
   subtitle?: string;
-  data: ChartData[];
+  data?: ChartData[]; // ✅ Made optional
   type: "bar" | "line" | "pie";
   dataKey?: string;
   xAxisKey?: string;
@@ -31,9 +31,9 @@ interface MagazineChartProps {
 }
 
 export function MagazineChart({
-  title,
+  title = "Data Visualization", // ✅ Default value
   subtitle,
-  data,
+  data = [], // ✅ Default empty array
   type,
   dataKey = "value",
   xAxisKey = "name",
@@ -91,7 +91,7 @@ export function MagazineChart({
   };
 
   // Normalize data: ensure numeric values
-  let normalizedData = (data || [])
+  let normalizedData = data
     .map((d) => {
       const raw = d[dataKey];
       const num =
