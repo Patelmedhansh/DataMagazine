@@ -21,19 +21,19 @@ interface ChartData {
 }
 
 interface MagazineChartProps {
-  title?: string; // ✅ Made optional
+  title?: string;
   subtitle?: string;
-  data?: ChartData[]; // ✅ Made optional
-  type: "bar" | "line" | "pie";
+  data?: ChartData[];
+  type?: "bar" | "line" | "pie"; // ✅ Made optional for auto-detection
   dataKey?: string;
   xAxisKey?: string;
   theme?: "business" | "tech" | "playful";
 }
 
 export function MagazineChart({
-  title = "Data Visualization", // ✅ Default value
+  title = "Data Visualization",
   subtitle,
-  data = [], // ✅ Default empty array
+  data = [],
   type,
   dataKey = "value",
   xAxisKey = "name",
@@ -48,10 +48,60 @@ export function MagazineChart({
 
   const colors = THEME_COLORS[theme] || THEME_COLORS.business;
 
-  // 🔥 CRITICAL FIX: Generate fallback data based on chart type
+  // 🔥 AUTO-DETECT CHART TYPE FROM TITLE IF NOT SPECIFIED
+  const getChartType = (): "bar" | "line" | "pie" => {
+    // If type explicitly provided, use it
+    if (type) {
+      console.log(`📊 Using explicit type for "${title}": ${type}`);
+      return type;
+    }
+
+    const titleLower = title.toLowerCase();
+
+    // Regional/breakdown → pie
+    if (
+      titleLower.includes("region") ||
+      titleLower.includes("breakdown") ||
+      titleLower.includes("distribution") ||
+      titleLower.includes("share")
+    ) {
+      console.log(`📊 Auto-detected PIE chart for: ${title}`);
+      return "pie";
+    }
+
+    // Growth/trend/year → line
+    if (
+      titleLower.includes("growth") ||
+      titleLower.includes("trend") ||
+      titleLower.includes("year") ||
+      titleLower.includes("over time")
+    ) {
+      console.log(`📊 Auto-detected LINE chart for: ${title}`);
+      return "line";
+    }
+
+    // Category/product/top/performance → bar
+    if (
+      titleLower.includes("category") ||
+      titleLower.includes("product") ||
+      titleLower.includes("top") ||
+      titleLower.includes("performance")
+    ) {
+      console.log(`📊 Auto-detected BAR chart for: ${title}`);
+      return "bar";
+    }
+
+    // Default to bar
+    console.log(`📊 No pattern matched, defaulting to BAR for: ${title}`);
+    return "bar";
+  };
+
+  const chartType = getChartType();
+
+  // 🔥 GENERATE FALLBACK DATA BASED ON CHART TYPE
   const getFallbackData = () => {
     const titleLower = title.toLowerCase();
-    
+
     // Regional data
     if (titleLower.includes("region") || titleLower.includes("geographic")) {
       return [
@@ -61,9 +111,13 @@ export function MagazineChart({
         { name: "West", value: 118620 },
       ];
     }
-    
+
     // Category data
-    if (titleLower.includes("category") || titleLower.includes("product") || titleLower.includes("top")) {
+    if (
+      titleLower.includes("category") ||
+      titleLower.includes("product") ||
+      titleLower.includes("top")
+    ) {
       return [
         { name: "Electronics", value: 342680 },
         { name: "Clothing", value: 144980 },
@@ -71,16 +125,20 @@ export function MagazineChart({
         { name: "Home", value: 72490 },
       ];
     }
-    
+
     // Growth/trend data
-    if (titleLower.includes("growth") || titleLower.includes("trend") || titleLower.includes("year")) {
+    if (
+      titleLower.includes("growth") ||
+      titleLower.includes("trend") ||
+      titleLower.includes("year")
+    ) {
       return [
         { name: "2022", value: 263600 },
         { name: "2023", value: 461300 },
         { name: "2024", value: 659000 },
       ];
     }
-    
+
     // Default quarterly data
     return [
       { name: "Q1", value: 131800 },
@@ -115,11 +173,13 @@ export function MagazineChart({
 
   if (!hasData) {
     console.log("📊 Using fallback data for:", title);
+    console.log("📊 Original data received:", data);
+    console.log("📊 Normalized data:", normalizedData);
     normalizedData = getFallbackData();
   }
 
   const renderChart = () => {
-    switch (type) {
+    switch (chartType) { // ✅ Use chartType instead of type
       case "bar":
         return (
           <ResponsiveContainer width="100%" height={300}>

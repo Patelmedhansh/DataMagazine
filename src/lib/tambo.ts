@@ -25,27 +25,32 @@ import { MagazineChart } from "@/components/magazine/MagazineChart";
  * System prompt for DataZine AI behavior
  */
 export const DATAZINE_SYSTEM_PROMPT = `
-You are DataZine AI. ALWAYS create complete magazines with:
+You are DataZine AI. When creating magazines, follow this EXACT workflow:
 
-1. MagazineCover
-2. FeatureArticle  
-3. 2 MagazineCharts (regional + category)
-4. Summary
+STEP-BY-STEP PROCESS:
+1. Query sales data: querySalesData({period: "2024-25"})
+2. Create cover: MagazineCover with sales data
+3. Create article: FeatureArticle with insights
+4. Fetch regional data: regionalData = getChartData({period: "2024-25", chartType: "regional"})
+5. Create regional chart: MagazineChart with data=regionalData
+6. Fetch category data: categoryData = getChartData({period: "2024-25", chartType: "category"})
+7. Create category chart: MagazineChart with data=categoryData
 
-MANDATORY CHART WORKFLOW:
-- User asks for magazine → IMMEDIATELY call getChartData({period: "2024-25", chartType: "regional"})
-- Render MagazineChart with returned data
-- Call getChartData({period: "2024-25", chartType: "category"})  
-- Render MagazineChart with returned data
+CRITICAL: When calling MagazineChart, you MUST:
+- First call getChartData to get the data array
+- Then pass that exact array to MagazineChart's data prop
+- Do NOT create MagazineChart without calling getChartData first
 
-NEVER skip charts. ALWAYS use both regional and category charts.
+WRONG (DON'T DO THIS):
+MagazineChart({title: "Regional Breakdown", type: "pie"})  // ❌ Missing data prop
 
-EXAMPLE RESPONSE STRUCTURE:
-1. MagazineCover(title="FY 2024-25 REVENUE EXPLOSION!", ...)
-2. FeatureArticle(title="...", content="...")
-3. MagazineChart(title="Regional Breakdown", data=[from regional tool], type="pie")
-4. MagazineChart(title="Category Performance", data=[from category tool], type="bar")
+CORRECT (DO THIS):
+const data = getChartData({period: "2024-25", chartType: "regional"});
+MagazineChart({title: "Regional Revenue Breakdown", data: data, type: "pie"});  // ✅ Has data
+
+ALL magazines must have: 1 cover + 1 article + 2 charts minimum.
 `;
+
 
 
 /**
@@ -382,43 +387,45 @@ export const components: TamboComponent[] = [
   },
   // MAGAZINE CHART COMPONENT
   {
-    name: "MagazineChart",
-    description: `
-      Magazine-style data visualization component.
-      
-      ⚠️ CRITICAL: You MUST call getChartData tool BEFORE using this component!
-      
-      WORKFLOW:
-      1. Call getChartData({ period: "2024-25", chartType: "regional" })
-      2. Use the returned data array in this component's data prop
-      3. Never pass empty data array
-      
-      CHART TYPES:
-      - "bar" → Use for regional/category comparisons
-      - "pie" → Use for market share/distribution (regional, category)
-      - "line" → Use for growth trends over time
-      
-      THEMES:
-      - "business" (gold/black) → Financial reports
-      - "tech" (blue/green) → Technology magazines
-      - "playful" (pink/yellow) → Creative magazines
-      
-      EXAMPLE USAGE:
-      1. First call: getChartData({ period: "2024-25", chartType: "regional" })
-      2. Then render: MagazineChart with returned data
-    `,
-    component: MagazineChart,
-    propsSchema: z.object({
-      title: z.string().describe("Chart title (e.g., 'Regional Revenue Breakdown')"),
-      subtitle: z.string().optional().describe("Subtitle with key insight"),
-      data: z.array(z.object({
-        name: z.string(),
-        value: z.number()
-      })).describe("Data array from getChartData tool - NEVER empty!"),
-      type: z.enum(['bar', 'line', 'pie']).describe("Chart visualization type"),
-      dataKey: z.string().optional().default('value'),
-      xAxisKey: z.string().optional().default('name'),
-      theme: z.enum(['business', 'tech', 'playful']).optional().default('business')
-    })
-  }
+  name: "MagazineChart",
+  description: `
+    Magazine-style data visualization component.
+    
+    ⚠️ CRITICAL WORKFLOW:
+    1. Call getChartData tool FIRST
+    2. Store the returned array in a variable
+    3. Pass that array to this component's 'data' prop
+    4. NEVER pass empty array or omit data prop
+    
+    EXAMPLE CORRECT USAGE:
+    const regionalData = await getChartData({period: "2024-25", chartType: "regional"});
+    MagazineChart({
+      title: "Regional Revenue Breakdown",
+      subtitle: "North leads with 33%",
+      data: regionalData,  // ← MUST pass the tool result here
+      type: "pie",
+      theme: "business"
+    });
+    
+    CHART TYPES:
+    - "bar" → Comparison charts
+    - "pie" → Distribution/share charts  
+    - "line" → Trend/growth charts
+    
+    The component will auto-detect data type from title, but explicit data prop is mandatory.
+  `,
+  component: MagazineChart,
+  propsSchema: z.object({
+    title: z.string().describe("Chart title"),
+    subtitle: z.string().optional().describe("Chart subtitle"),
+    data: z.array(z.object({
+      name: z.string(),
+      value: z.number()
+    })).optional().describe("REQUIRED: Data array from getChartData tool"), // ✅ Made optional but emphasized
+    type: z.enum(['bar', 'line', 'pie']).describe("Chart type"),
+    dataKey: z.string().optional().default('value'),
+    xAxisKey: z.string().optional().default('name'),
+    theme: z.enum(['business', 'tech', 'playful']).optional().default('business')
+  })
+}
 ];
