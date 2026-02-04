@@ -24,7 +24,7 @@ interface MagazineChartProps {
   title?: string;
   subtitle?: string;
   data?: ChartData[];
-  type?: "bar" | "line" | "pie"; // ✅ Made optional for auto-detection
+  type?: "bar" | "line" | "pie";
   dataKey?: string;
   xAxisKey?: string;
   theme?: "business" | "tech" | "playful";
@@ -33,7 +33,7 @@ interface MagazineChartProps {
 export function MagazineChart({
   title = "Data Visualization",
   subtitle,
-  data = [],
+  data,
   type,
   dataKey = "value",
   xAxisKey = "name",
@@ -50,9 +50,8 @@ export function MagazineChart({
 
   // 🔥 AUTO-DETECT CHART TYPE FROM TITLE IF NOT SPECIFIED
   const getChartType = (): "bar" | "line" | "pie" => {
-    // If type explicitly provided, use it
     if (type) {
-      console.log(`📊 Using explicit type for "${title}": ${type}`);
+      console.log(`📊 Using explicit type for "${title}":`, type);
       return type;
     }
 
@@ -73,8 +72,8 @@ export function MagazineChart({
     if (
       titleLower.includes("growth") ||
       titleLower.includes("trend") ||
-      titleLower.includes("year") ||
-      titleLower.includes("over time")
+      titleLower.includes("timeline") ||
+      titleLower.includes("year")
     ) {
       console.log(`📊 Auto-detected LINE chart for: ${title}`);
       return "line";
@@ -85,13 +84,13 @@ export function MagazineChart({
       titleLower.includes("category") ||
       titleLower.includes("product") ||
       titleLower.includes("top") ||
+      titleLower.includes("sales") ||
       titleLower.includes("performance")
     ) {
       console.log(`📊 Auto-detected BAR chart for: ${title}`);
       return "bar";
     }
 
-    // Default to bar
     console.log(`📊 No pattern matched, defaulting to BAR for: ${title}`);
     return "bar";
   };
@@ -99,7 +98,7 @@ export function MagazineChart({
   const chartType = getChartType();
 
   // 🔥 GENERATE FALLBACK DATA BASED ON CHART TYPE
-  const getFallbackData = () => {
+  const getFallbackData = (): ChartData[] => {
     const titleLower = title.toLowerCase();
 
     // Regional data
@@ -116,6 +115,7 @@ export function MagazineChart({
     if (
       titleLower.includes("category") ||
       titleLower.includes("product") ||
+      titleLower.includes("sales") ||
       titleLower.includes("top")
     ) {
       return [
@@ -130,12 +130,13 @@ export function MagazineChart({
     if (
       titleLower.includes("growth") ||
       titleLower.includes("trend") ||
+      titleLower.includes("timeline") ||
       titleLower.includes("year")
     ) {
       return [
         { name: "2022", value: 263600 },
         { name: "2023", value: 461300 },
-        { name: "2024", value: 659000 },
+        { name: "2024-25", value: 659000 },
       ];
     }
 
@@ -148,38 +149,40 @@ export function MagazineChart({
     ];
   };
 
-  // Normalize data: ensure numeric values
-  let normalizedData = data
-    .map((d) => {
-      const raw = d[dataKey];
-      const num =
-        typeof raw === "number"
-          ? raw
-          : typeof raw === "string"
-          ? Number(raw.replace(/[^0-9.-]/g, ""))
-          : NaN;
+  // 🔥 STEP 1: DECIDE DATA SOURCE (passed data vs fallback)
+  let sourceData: ChartData[];
 
-      return {
-        ...d,
-        [dataKey]: Number.isFinite(num) ? num : 0,
-      };
-    })
-    .filter((d) => Number.isFinite(d[dataKey] as number));
-
-  // 🔥 USE FALLBACK IF NO VALID DATA
-  const hasData =
-    normalizedData.length > 0 &&
-    normalizedData.some((d) => (d[dataKey] as number) !== 0);
-
-  if (!hasData) {
-    console.log("📊 Using fallback data for:", title);
-    console.log("📊 Original data received:", data);
-    console.log("📊 Normalized data:", normalizedData);
-    normalizedData = getFallbackData();
+  if (data && Array.isArray(data) && data.length > 0) {
+    console.log(`📊 ✅ Using passed data for "${title}":`, data.length, "items");
+    sourceData = data;
+  } else {
+    console.log(`📊 ⚠️ No data passed for "${title}", using fallback`);
+    sourceData = getFallbackData();
   }
 
+  // 🔥 STEP 2: NORMALIZE DATA (ensure numeric values)
+  const normalizedData = sourceData.map((d) => {
+    const raw = d[dataKey];
+    let num: number;
+
+    if (typeof raw === "number") {
+      num = raw;
+    } else if (typeof raw === "string") {
+      num = Number(raw.replace(/[^0-9.-]/g, ""));
+    } else {
+      num = 0;
+    }
+
+    return {
+      ...d,
+      [dataKey]: Number.isFinite(num) ? num : 0,
+    };
+  });
+
+  console.log(`📊 Final normalized data for "${title}":`, normalizedData);
+
   const renderChart = () => {
-    switch (chartType) { // ✅ Use chartType instead of type
+    switch (chartType) {
       case "bar":
         return (
           <ResponsiveContainer width="100%" height={300}>
