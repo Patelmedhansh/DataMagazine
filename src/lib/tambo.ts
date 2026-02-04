@@ -181,100 +181,82 @@ export const tools: TamboTool[] = [
     Returns array of { name: string, value: number } ready for charts.
   `,
   tool: async ({ period, chartType }: { period: string; chartType: 'regional' | 'category' | 'growth' }) => {
-    // 1) Try API if available
+    console.log("🛠️ getChartData called:", { period, chartType });
+    
+    let revenue = 659000; // Default fallback
+    
+    // Try to fetch from API
     try {
-      const baseUrl =
-        process.env.NEXT_PUBLIC_BASE_URL ||
-        (typeof window !== "undefined" ? window.location.origin : "");
-
+      const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 
+                     (typeof window !== 'undefined' ? window.location.origin : '');
+      
+      console.log("🛠️ Fetching from:", `${baseUrl}/api/sales?period=${period}`);
+      
       if (baseUrl) {
-        const res = await fetch(
-          `${baseUrl}/api/sales?period=${encodeURIComponent(period)}`
-        );
-
-        if (res.ok) {
-          const salesData = await res.json();
-          const revenue = salesData.revenue || 659000;
-
-          if (chartType === "regional") {
-            return [
-              { name: "North", value: Math.round(revenue * 0.33) },
-              { name: "South", value: Math.round(revenue * 0.25) },
-              { name: "East", value: Math.round(revenue * 0.24) },
-              { name: "West", value: Math.round(revenue * 0.18) },
-            ];
-          }
-
-          if (chartType === "category") {
-            return [
-              { name: "Electronics", value: Math.round(revenue * 0.52) },
-              { name: "Clothing", value: Math.round(revenue * 0.22) },
-              { name: "Food", value: Math.round(revenue * 0.15) },
-              { name: "Home", value: Math.round(revenue * 0.11) },
-            ];
-          }
-
-          if (chartType === "growth") {
-            const year = parseInt(period.match(/(\d{4})/)?.[1] || "2024");
-            return [
-              { name: `${year - 2}`, value: Math.round(revenue * 0.4) },
-              { name: `${year - 1}`, value: Math.round(revenue * 0.7) },
-              { name: `${year}`, value: revenue },
-            ];
-          }
+        const response = await fetch(`${baseUrl}/api/sales?period=${encodeURIComponent(period)}`, {
+          method: 'GET',
+          headers: { 'Content-Type': 'application/json' },
+          cache: 'no-store'
+        });
+        
+        if (response.ok) {
+          const salesData = await response.json();
+          revenue = salesData.revenue || 659000;
+          console.log("🛠️ API returned revenue:", revenue);
+        } else {
+          console.warn("🛠️ API failed, using fallback:", response.status);
         }
       }
-    } catch (e) {
-      console.error("getChartData API error:", e);
+    } catch (error) {
+      console.error("🛠️ API error, using fallback:", error);
     }
-
-    // 2) Hardcoded fallback – NEVER return []
-    if (chartType === "regional") {
-      return [
-        { name: "North", value: 217470 },
-        { name: "South", value: 164750 },
-        { name: "East", value: 158160 },
-        { name: "West", value: 118620 },
+    
+    // ALWAYS return data - never return []
+    let result;
+    
+    if (chartType === 'regional') {
+      result = [
+        { name: 'North', value: Math.round(revenue * 0.33) },
+        { name: 'South', value: Math.round(revenue * 0.25) },
+        { name: 'East', value: Math.round(revenue * 0.24) },
+        { name: 'West', value: Math.round(revenue * 0.18) }
+      ];
+    } else if (chartType === 'category') {
+      result = [
+        { name: 'Electronics', value: Math.round(revenue * 0.52) },
+        { name: 'Clothing', value: Math.round(revenue * 0.22) },
+        { name: 'Food', value: Math.round(revenue * 0.15) },
+        { name: 'Home', value: Math.round(revenue * 0.11) }
+      ];
+    } else if (chartType === 'growth') {
+      const year = parseInt(period.match(/(\d{4})/)?.[1] || '2024');
+      result = [
+        { name: `${year-2}`, value: Math.round(revenue * 0.4) },
+        { name: `${year-1}`, value: Math.round(revenue * 0.7) },
+        { name: `${year}`, value: revenue }
+      ];
+    } else {
+      result = [
+        { name: 'Q1', value: Math.round(revenue * 0.2) },
+        { name: 'Q2', value: Math.round(revenue * 0.25) },
+        { name: 'Q3', value: Math.round(revenue * 0.27) },
+        { name: 'Q4', value: Math.round(revenue * 0.28) }
       ];
     }
-
-    if (chartType === "category") {
-      return [
-        { name: "Electronics", value: 342680 },
-        { name: "Clothing", value: 144980 },
-        { name: "Food", value: 98850 },
-        { name: "Home", value: 72490 },
-      ];
-    }
-
-    if (chartType === "growth") {
-      return [
-        { name: "2022", value: 263600 },
-        { name: "2023", value: 461300 },
-        { name: "2024", value: 659000 },
-      ];
-    }
-
-    // Ultimate fallback
-    return [
-      { name: "A", value: 100000 },
-      { name: "B", value: 150000 },
-      { name: "C", value: 200000 },
-    ];
+    
+    console.log("🛠️ Returning chart data:", result);
+    return result;
   },
   inputSchema: z.object({
     period: z.string().describe("Period like '2024-25'"),
-    chartType: z
-      .enum(["regional", "category", "growth"])
-      .describe("Type of chart data needed"),
+    chartType: z.enum(['regional', 'category', 'growth']).describe("Type of chart data needed")
   }),
-  outputSchema: z.array(
-    z.object({
-      name: z.string(),
-      value: z.number(),
-    })
-  ),
+  outputSchema: z.array(z.object({
+    name: z.string(),
+    value: z.number()
+  }))
 }
+
 ,
   // STORY GENERATION TOOL
   {
