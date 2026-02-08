@@ -1,247 +1,108 @@
+"use client";
+
 import React from "react";
 import {
-  BarChart,
-  Bar,
-  LineChart,
-  Line,
-  PieChart,
-  Pie,
-  Cell,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
+  BarChart, Bar, LineChart, Line, PieChart, Pie, Cell,
+  XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend, LabelList
 } from "recharts";
 
 interface ChartData {
   name: string;
-  value: number | string;
+  value: number;
   [key: string]: string | number;
 }
 
 interface MagazineChartProps {
-  title?: string;
+  title: string;
   subtitle?: string;
-  data?: ChartData[];
-  type?: "bar" | "line" | "pie";
-  dataKey?: string;
-  xAxisKey?: string;
-  theme?: "business" | "tech" | "playful";
+  data: ChartData[];
+  type: "bar" | "line" | "pie";
 }
 
+const COLORS = ["#e63946", "#f77f00", "#fcbf49", "#2a9d8f", "#8338ec"];
+
+// 1. COMIC TOOLTIP
+const ComicTooltip = ({ active, payload, label }: any) => {
+  if (active && payload && payload.length) {
+    return (
+      <div className="bg-white border-2 border-black p-3 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] z-50">
+        <p className="font-mono text-xs font-bold uppercase border-b border-black mb-1">{label}</p>
+        <p className="text-[#e63946] font-bold text-lg">
+          {payload[0].value.toLocaleString()} units
+        </p>
+      </div>
+    );
+  }
+  return null;
+};
+
+// 2. COMIC LEGEND
+const ComicLegend = (props: any) => {
+  const { payload } = props;
+  return (
+    <ul className="flex flex-wrap justify-center gap-4 mt-4 text-xs font-mono uppercase">
+      {payload.map((entry: any, index: number) => (
+        <li key={`item-${index}`} className="flex items-center gap-2">
+          <span className="w-3 h-3 border border-black" style={{ backgroundColor: entry.color }} />
+          <span>{entry.value}</span>
+        </li>
+      ))}
+    </ul>
+  );
+};
+
 export function MagazineChart({
-  title = "Data Visualization",
+  title,
   subtitle,
-  data,
+  data = [],
   type,
-  dataKey = "value",
-  xAxisKey = "name",
-  theme = "business",
 }: MagazineChartProps) {
-  // Theme colors
-  const THEME_COLORS: Record<string, string[]> = {
-    business: ["#d4af37", "#1a1a1a", "#8b7355", "#c9b037", "#6b5d4f"],
-    tech: ["#0066cc", "#00ff88", "#0052a3", "#00cc6a", "#003d7a"],
-    playful: ["#ff006e", "#ffd23f", "#cc0058", "#e6b800", "#99004a"],
-  };
-
-  const colors = THEME_COLORS[theme] || THEME_COLORS.business;
-
-  // 🔥 AUTO-DETECT CHART TYPE FROM TITLE IF NOT SPECIFIED
-  const getChartType = (): "bar" | "line" | "pie" => {
-    if (type) {
-      console.log(`📊 Using explicit type for "${title}":`, type);
-      return type;
-    }
-
-    const titleLower = title.toLowerCase();
-
-    // Regional/breakdown → pie
-    if (
-      titleLower.includes("region") ||
-      titleLower.includes("breakdown") ||
-      titleLower.includes("distribution") ||
-      titleLower.includes("share")
-    ) {
-      console.log(`📊 Auto-detected PIE chart for: ${title}`);
-      return "pie";
-    }
-
-    // Growth/trend/year → line
-    if (
-      titleLower.includes("growth") ||
-      titleLower.includes("trend") ||
-      titleLower.includes("timeline") ||
-      titleLower.includes("year")
-    ) {
-      console.log(`📊 Auto-detected LINE chart for: ${title}`);
-      return "line";
-    }
-
-    // Category/product/top/performance → bar
-    if (
-      titleLower.includes("category") ||
-      titleLower.includes("product") ||
-      titleLower.includes("top") ||
-      titleLower.includes("sales") ||
-      titleLower.includes("performance")
-    ) {
-      console.log(`📊 Auto-detected BAR chart for: ${title}`);
-      return "bar";
-    }
-
-    console.log(`📊 No pattern matched, defaulting to BAR for: ${title}`);
-    return "bar";
-  };
-
-  const chartType = getChartType();
-
-  // 🔥 GENERATE FALLBACK DATA BASED ON CHART TYPE
-  const getFallbackData = (): ChartData[] => {
-    const titleLower = title.toLowerCase();
-
-    // Regional data
-    if (titleLower.includes("region") || titleLower.includes("geographic")) {
-      return [
-        { name: "North", value: 217470 },
-        { name: "South", value: 164750 },
-        { name: "East", value: 158160 },
-        { name: "West", value: 118620 },
-      ];
-    }
-
-    // Category data
-    if (
-      titleLower.includes("category") ||
-      titleLower.includes("product") ||
-      titleLower.includes("sales") ||
-      titleLower.includes("top")
-    ) {
-      return [
-        { name: "Electronics", value: 342680 },
-        { name: "Clothing", value: 144980 },
-        { name: "Food", value: 98850 },
-        { name: "Home", value: 72490 },
-      ];
-    }
-
-    // Growth/trend data
-    if (
-      titleLower.includes("growth") ||
-      titleLower.includes("trend") ||
-      titleLower.includes("timeline") ||
-      titleLower.includes("year")
-    ) {
-      return [
-        { name: "2022", value: 263600 },
-        { name: "2023", value: 461300 },
-        { name: "2024-25", value: 659000 },
-      ];
-    }
-
-    // Default quarterly data
-    return [
-      { name: "Q1", value: 131800 },
-      { name: "Q2", value: 164750 },
-      { name: "Q3", value: 177930 },
-      { name: "Q4", value: 184520 },
-    ];
-  };
-
-  // 🔥 STEP 1: DECIDE DATA SOURCE (passed data vs fallback)
-  let sourceData: ChartData[];
-
-  if (data && Array.isArray(data) && data.length > 0) {
-    console.log(`📊 ✅ Using passed data for "${title}":`, data.length, "items");
-    sourceData = data;
-  } else {
-    console.log(`📊 ⚠️ No data passed for "${title}", using fallback`);
-    sourceData = getFallbackData();
+  
+  if (!data || data.length === 0) {
+    return (
+      <div className="p-8 text-center border-2 border-dashed border-black font-mono opacity-50">
+        NO DATA TO DISPLAY
+      </div>
+    );
   }
 
-  // 🔥 STEP 2: NORMALIZE DATA (ensure numeric values)
-  const normalizedData = sourceData.map((d) => {
-    const raw = d[dataKey];
-    let num: number;
-
-    if (typeof raw === "number") {
-      num = raw;
-    } else if (typeof raw === "string") {
-      num = Number(raw.replace(/[^0-9.-]/g, ""));
-    } else {
-      num = 0;
-    }
-
-    return {
-      ...d,
-      [dataKey]: Number.isFinite(num) ? num : 0,
-    };
-  });
-
-  console.log(`📊 Final normalized data for "${title}":`, normalizedData);
-
   const renderChart = () => {
-    switch (chartType) {
+    switch (type) {
       case "bar":
         return (
-          <ResponsiveContainer width="100%" height={300}>
-            <BarChart data={normalizedData}>
-              <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,0,0,0.1)" />
-              <XAxis
-                dataKey={xAxisKey}
-                style={{ fontSize: "12px", fontFamily: "Inter" }}
-              />
-              <YAxis
-                style={{ fontSize: "12px", fontFamily: "Inter" }}
-                allowDecimals={false}
-              />
-              <Tooltip
-                contentStyle={{
-                  background: "white",
-                  border: "1px solid #ddd",
-                  borderRadius: "4px",
-                  fontFamily: "Inter",
-                }}
-              />
-              <Bar
-                dataKey={dataKey}
-                fill={colors[0]}
-                radius={[4, 4, 0, 0]}
-                maxBarSize={60}
-              />
+          <ResponsiveContainer width="100%" height={350}>
+            <BarChart data={data} margin={{ top: 20, right: 30, left: 0, bottom: 5 }}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#e5e5e5" />
+              <XAxis dataKey="name" tick={{ fontFamily: 'monospace', fontSize: 10 }} />
+              <YAxis tick={{ fontFamily: 'monospace', fontSize: 10 }} />
+              <Tooltip content={<ComicTooltip />} cursor={{ fill: '#f5f3e8', opacity: 0.5 }} />
+              <Bar dataKey="value" name="Units Sold" fill="#e63946" stroke="#1a1a1a" strokeWidth={2}>
+                {data.map((entry, index) => (
+                  <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                ))}
+                <LabelList dataKey="value" position="top" style={{ fontFamily: 'monospace', fontSize: '10px' }} />
+              </Bar>
             </BarChart>
           </ResponsiveContainer>
         );
 
       case "line":
         return (
-          <ResponsiveContainer width="100%" height={300}>
-            <LineChart data={normalizedData}>
-              <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,0,0,0.1)" />
-              <XAxis
-                dataKey={xAxisKey}
-                style={{ fontSize: "12px", fontFamily: "Inter" }}
-              />
-              <YAxis
-                style={{ fontSize: "12px", fontFamily: "Inter" }}
-                allowDecimals={false}
-              />
-              <Tooltip
-                contentStyle={{
-                  background: "white",
-                  border: "1px solid #ddd",
-                  borderRadius: "4px",
-                  fontFamily: "Inter",
-                }}
-              />
-              <Line
-                type="monotone"
-                dataKey={dataKey}
-                stroke={colors[0]}
-                strokeWidth={3}
-                dot={{ fill: colors[0], r: 5 }}
-                activeDot={{ r: 7 }}
+          <ResponsiveContainer width="100%" height={350}>
+            <LineChart data={data} margin={{ top: 20, right: 30, left: 10, bottom: 5 }}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#e5e5e5" />
+              <XAxis dataKey="name" tick={{ fontFamily: 'monospace', fontSize: 10 }} />
+              <YAxis tick={{ fontFamily: 'monospace', fontSize: 10 }} />
+              <Tooltip content={<ComicTooltip />} />
+              <Legend content={<ComicLegend />} />
+              <Line 
+                type="monotone" 
+                dataKey="value" 
+                name="Growth Trend"
+                stroke="#1a1a1a" 
+                strokeWidth={3} 
+                dot={{ fill: "#fcbf49", stroke: "#1a1a1a", strokeWidth: 2, r: 5 }} 
+                activeDot={{ r: 8, fill: "#e63946" }}
               />
             </LineChart>
           </ResponsiveContainer>
@@ -249,60 +110,64 @@ export function MagazineChart({
 
       case "pie":
         return (
-          <ResponsiveContainer width="100%" height={300}>
+          <ResponsiveContainer width="100%" height={350}>
             <PieChart>
               <Pie
-                data={normalizedData}
+                data={data}
                 cx="50%"
                 cy="50%"
-                labelLine={false}
-                label={({ name, percent }) =>
-                  `${name}: ${((percent || 0) * 100).toFixed(0)}%`
-                }
-                outerRadius={100}
+                innerRadius={60}
+                outerRadius={90}
                 fill="#8884d8"
-                dataKey={dataKey}
+                paddingAngle={5}
+                dataKey="value"
+                stroke="#1a1a1a"
+                strokeWidth={2}
+                // FIXED: 'name' is now optional string (name?: string) to match Recharts types
+                label={({ name, percent }: { name?: string; percent?: number }) => 
+                  `${name || ''} ${((percent || 0) * 100).toFixed(0)}%`
+                }
+                labelLine={{ stroke: '#1a1a1a', strokeWidth: 1 }}
               >
-                {normalizedData.map((entry, index) => (
-                  <Cell
-                    key={`cell-${index}`}
-                    fill={colors[index % colors.length]}
-                  />
+                {data.map((entry, index) => (
+                  <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                 ))}
               </Pie>
-              <Tooltip
-                contentStyle={{
-                  background: "white",
-                  border: "1px solid #ddd",
-                  borderRadius: "4px",
-                  fontFamily: "Inter",
-                }}
-              />
+              <Tooltip content={<ComicTooltip />} />
+              <Legend content={<ComicLegend />} />
             </PieChart>
           </ResponsiveContainer>
         );
-
-      default:
-        return null;
+      default: return null;
     }
   };
 
   return (
-    <div className={`magazine-chart magazine-chart--${theme}`}>
-      {/* Chart Header */}
-      <div className="chart-header">
-        <h3 className="chart-title">{title}</h3>
-        {subtitle && <p className="chart-subtitle">{subtitle}</p>}
+    <div className="w-full my-6 bg-white border-4 border-[#1a1a1a] shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] p-6 relative group hover:shadow-[12px_12px_0px_0px_rgba(0,0,0,1)] transition-all">
+      {/* Title Badge */}
+      <div className="absolute -top-4 left-4 bg-[#fcbf49] border-2 border-[#1a1a1a] px-4 py-1 transform -rotate-2 z-10">
+        <h3 className="font-sans font-black text-xl tracking-wider text-[#1a1a1a] uppercase">
+          {title}
+        </h3>
+      </div>
+      
+      {/* Subtitle */}
+      {subtitle && (
+         <div className="mt-4 mb-2 ml-1 text-sm font-mono text-gray-500 italic">
+           — {subtitle}
+         </div>
+      )}
+
+      {/* Chart Area */}
+      <div className="mt-6 w-full bg-[#f5f3e8]/50 border border-[#1a1a1a]/10 rounded p-2">
+        {renderChart()}
       </div>
 
-      {/* Chart Body */}
-      <div className="chart-body">{renderChart()}</div>
-
-      {/* Chart Footer */}
-      <div className="chart-footer">
-        <div className="chart-caption">
-          Data visualization • {normalizedData.length} data points
-        </div>
+      {/* Footer Note */}
+      <div className="mt-2 text-right">
+        <span className="text-[10px] font-mono text-gray-400 uppercase tracking-widest">
+          Fig 1.{Math.floor(Math.random() * 99)} • Source: DataZine
+        </span>
       </div>
     </div>
   );
