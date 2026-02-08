@@ -16,7 +16,7 @@ import { Check, ChevronDown, ExternalLink, Loader2, X, Bot, User, Download } fro
 import * as React from "react";
 import { useState } from "react";
 import { Streamdown } from "streamdown";
-import html2canvas from "html2canvas"; 
+import html2canvas from "html2canvas-pro"; 
 import jsPDF from "jspdf";
 
 /**
