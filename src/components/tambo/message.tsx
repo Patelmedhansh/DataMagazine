@@ -12,10 +12,12 @@ import { useTambo } from "@tambo-ai/react";
 import type TamboAI from "@tambo-ai/typescript-sdk";
 import { cva, type VariantProps } from "class-variance-authority";
 import stringify from "json-stringify-pretty-compact";
-import { Check, ChevronDown, ExternalLink, Loader2, X, Bot, User } from "lucide-react";
+import { Check, ChevronDown, ExternalLink, Loader2, X, Bot, User, Download } from "lucide-react";
 import * as React from "react";
 import { useState } from "react";
 import { Streamdown } from "streamdown";
+import html2canvas from "html2canvas"; 
+import jsPDF from "jspdf";
 
 /**
  * Converts message content to markdown format for rendering with streamdown.
@@ -48,7 +50,6 @@ function convertContentToMarkdown(
 
 /**
  * CSS variants for the message container
- * Updated for Comic Layout
  */
 const messageVariants = cva("flex w-full mb-8 items-start gap-4 transition-all", {
   variants: {
@@ -68,7 +69,7 @@ const messageVariants = cva("flex w-full mb-8 items-start gap-4 transition-all",
 });
 
 /**
- * CSS variants for the Speech Bubble itself
+ * CSS variants for the Speech Bubble
  */
 const bubbleVariants = cva(
   "relative max-w-full md:max-w-[85%] p-6 text-lg leading-relaxed shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-transform hover:translate-y-[-2px] overflow-hidden",
@@ -118,9 +119,6 @@ export interface MessageProps extends Omit<
   children: React.ReactNode;
 }
 
-/**
- * The Message Wrapper: Handles Avatar + Bubble Layout
- */
 const Message = React.forwardRef<HTMLDivElement, MessageProps>(
   (
     { children, className, role, variant, isLoading, message, ...props },
@@ -139,23 +137,21 @@ const Message = React.forwardRef<HTMLDivElement, MessageProps>(
       <MessageContext.Provider value={contextValue}>
         <div
           ref={ref}
-          // We apply the 'role' variant here to control flex direction
           className={cn(messageVariants({ role, variant }), className)}
           data-message-role={role}
           data-message-id={message.id}
           {...props}
         >
-          {/* 1. COMIC AVATAR */}
+          {/* Avatar */}
           <div className={cn(
              "flex h-10 w-10 md:h-12 md:w-12 shrink-0 items-center justify-center rounded-full border-2 border-ink-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] z-10",
              role === "user" ? "bg-vintage-yellow ml-2" : "bg-vintage-blue mr-2"
           )}>
-             {role === "user" ? <User size={20} /> : <Bot size={20} />}
+              {role === "user" ? <User size={20} /> : <Bot size={20} />}
           </div>
 
-          {/* 2. SPEECH BUBBLE */}
+          {/* Bubble */}
           <div className={cn(bubbleVariants({ role }), "flex-1 min-w-0")}>
-            {/* Tiny Triangles for Speech Tails */}
             {role === "user" && (
               <div className="absolute -right-[15px] top-[0px] w-0 h-0 border-t-[15px] border-t-ink-black border-r-[15px] border-r-transparent transform rotate-90" />
             )}
@@ -163,7 +159,6 @@ const Message = React.forwardRef<HTMLDivElement, MessageProps>(
               <div className="absolute -left-[15px] top-[0px] w-0 h-0 border-t-[15px] border-t-ink-black border-l-[15px] border-l-transparent transform -rotate-90" />
             )}
 
-            {/* Content Container */}
             <div className="w-full">
               {children}
             </div>
@@ -278,7 +273,6 @@ const MessageContent = React.forwardRef<HTMLDivElement, MessageContentProps>(
     return (
       <div
         ref={ref}
-        // Simplified styling: Removed rounded-3xl and backgrounds because parent bubble handles it
         className={cn(
           "relative block text-[15px] leading-relaxed transition-all duration-200 font-medium max-w-full bg-transparent p-0",
           className,
@@ -835,7 +829,20 @@ const MessageRenderedComponentArea = React.forwardRef<
   MessageRenderedComponentAreaProps
 >(({ className, children, ...props }, ref) => {
   const { message, role } = useMessageContext();
+  const { thread } = useTambo();
   const [canvasExists, setCanvasExists] = React.useState(false);
+  
+  const contentRef = React.useRef<HTMLDivElement>(null);
+  const [isDownloading, setIsDownloading] = React.useState(false);
+
+  // Logic: Show the download button ONLY on the last AI message that has a component
+  const isLastComponent = React.useMemo(() => {
+      if (!thread?.messages) return false;
+      const componentMessages = thread.messages.filter((m: TamboThreadMessage) => m.renderedComponent && !m.isCancelled && m.role === 'assistant');
+      if (componentMessages.length === 0) return false;
+      const lastMsg = componentMessages[componentMessages.length - 1];
+      return lastMsg?.id === message.id;
+  }, [thread?.messages, message.id]);
 
   React.useEffect(() => {
     const checkCanvasExists = () => {
@@ -848,6 +855,66 @@ const MessageRenderedComponentArea = React.forwardRef<
       window.removeEventListener("resize", checkCanvasExists);
     };
   }, []);
+
+  const handleDownloadAllPDF = async () => {
+    setIsDownloading(true);
+
+    try {
+      // Find all report parts in the entire chat history
+      const allReportPages = document.querySelectorAll(".tambo-report-part");
+      
+      if (allReportPages.length === 0) {
+        alert("No report pages found to download.");
+        setIsDownloading(false);
+        return;
+      }
+
+      const pdf = new jsPDF({
+        orientation: "portrait",
+        unit: "pt",
+        format: "a4"
+      });
+
+      const padding = 20; 
+      const pageWidth = pdf.internal.pageSize.getWidth();
+      const contentWidth = pageWidth - (padding * 2);
+
+      for (let i = 0; i < allReportPages.length; i++) {
+        const pageElement = allReportPages[i] as HTMLElement;
+        
+        // Capture element with high resolution
+        // FIX: Cast options to any to avoid strict type error on 'scale'
+        const canvas = await html2canvas(pageElement, {
+            scale: 2,
+            useCORS: true,
+            logging: false,
+            backgroundColor: "#ffffff",
+        } as any);
+
+        const imgData = canvas.toDataURL("image/png");
+        
+        // FIX: Calculate aspect ratio manually without getImageProperties
+        const imgWidth = canvas.width;
+        const imgHeight = canvas.height;
+        const pdfImgHeight = (imgHeight * contentWidth) / imgWidth;
+
+        // Add new page for each component (except the first one)
+        if (i > 0) {
+            pdf.addPage();
+        }
+
+        pdf.addImage(imgData, "PNG", padding, padding, contentWidth, pdfImgHeight);
+      }
+      
+      pdf.save(`data-magazine-${new Date().toISOString().split('T')[0]}.pdf`);
+
+    } catch (error) {
+      console.error("Failed to generate PDF:", error);
+      alert("Could not generate PDF. Please try again.");
+    } finally {
+      setIsDownloading(false);
+    }
+  };
 
   if (
     !message.renderedComponent ||
@@ -887,7 +954,32 @@ const MessageRenderedComponentArea = React.forwardRef<
             </button>
           </div>
         ) : (
-          <div className="w-full pt-4">{message.renderedComponent}</div>
+          <div className="w-full pt-4 relative group/download">
+            
+            {/* WRAPPER FOR PDF CAPTURE */}
+            <div ref={contentRef} className="bg-white rounded-md tambo-report-part mb-4 overflow-hidden"> 
+               {message.renderedComponent}
+            </div>
+
+            {/* DOWNLOAD BUTTON (Only on last component) */}
+            {isLastComponent && (
+                <div className="w-full flex justify-center pb-4 mt-8">
+                    <button 
+                        onClick={handleDownloadAllPDF}
+                        disabled={isDownloading}
+                        className="flex items-center gap-2 bg-[#1a1a1a] text-white px-6 py-3 rounded-lg text-sm font-bold shadow-lg transition-all duration-200 transform hover:scale-105 disabled:opacity-50 disabled:hover:scale-100 hover:bg-[#e63946]"
+                        title="Download Full Magazine (All Pages)"
+                    >
+                        {isDownloading ? (
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                        ) : (
+                        <Download className="w-4 h-4" />
+                        )}
+                        {isDownloading ? "Compiling PDF..." : "DOWNLOAD FULL ISSUE"}
+                    </button>
+                </div>
+            )}
+          </div>
         ))}
     </div>
   );
